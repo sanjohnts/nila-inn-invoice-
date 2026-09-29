@@ -361,6 +361,13 @@
     <header><h2 id="setTitle">Settings</h2><button class="close" type="button" data-close aria-label="Close">✕</button></header>
     <div class="body">
       <section class="group">
+        <h2>Account</h2>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap">
+          <div style="min-width:0"><b id="userName">Signed in</b><div id="userEmail" style="font-size:0.8rem; color:var(--muted); overflow-wrap:anywhere"></div></div>
+          <button type="button" class="plain danger" id="bLogout">Log out</button>
+        </div>
+      </section>
+      <section class="group">
         <h2>Business on the invoice</h2>
         <div class="field"><label for="s-name">Name</label><input id="s-name" data-s="name"></div>
         <div class="field"><label for="s-tag">Tagline</label><input id="s-tag" data-s="tagline"></div>
@@ -726,5 +733,6 @@
   fill(); update(); refreshCount();
 })();
 </script>
+<script src="/login/session.js"></script>
 </body>
 </html>

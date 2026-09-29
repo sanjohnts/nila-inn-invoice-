@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Log in · Nila Inn Invoices</title>
+<link rel="icon" type="image/jpeg" href="/images/emblem.jpg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#EDE5D6;
+    --panel:#F7F2E8;
+    --ink:#24231F;
+    --muted:#6B665D;
+    --line:rgba(36,35,31,0.14);
+    --line-2:rgba(36,35,31,0.08);
+    --olive:#26352B;
+    --terra:#C75B32;
+    --gold:#D6B56A;
+    --serif:'Fraunces', Georgia, 'Times New Roman', serif;
+    --sans:'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none !important}
+  html, body{min-height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink); font-family:var(--sans); font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased;
+    display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px 16px;
+  }
+  button, input{font:inherit; color:inherit}
+  :focus-visible{outline:2px solid var(--terra); outline-offset:2px}
+
+  .card{width:min(400px, 100%); background:var(--panel); border:1px solid var(--line-2); border-radius:18px; overflow:hidden; box-shadow:0 1px 2px rgba(36,35,31,0.08), 0 18px 50px rgba(36,35,31,0.14)}
+  .head{background:var(--olive); color:#F7F2E8; text-align:center; padding:26px 22px 22px}
+  .head img{width:66px; height:66px; border-radius:50%; object-fit:cover; border:1.5px solid rgba(214,181,106,0.6)}
+  .head h1{margin:10px 0 2px; font-family:var(--serif); font-weight:500; font-size:1.45rem; line-height:1.2}
+  .head p{margin:0; font-family:var(--serif); font-style:italic; color:var(--gold); font-size:0.92rem}
+  .rule{height:3px; background:linear-gradient(90deg, var(--olive) 0 65%, var(--gold) 65% 100%)}
+
+  .tabs{display:flex; gap:6px; padding:18px 22px 0}
+  .tabs button{flex:1; border:1px solid var(--line); background:#fff; border-radius:999px; padding:8px; cursor:pointer; font-weight:600; font-size:0.86rem}
+  .tabs button[aria-selected="true"]{background:var(--olive); color:#F7F2E8; border-color:var(--olive)}
+
+  form{padding:18px 22px 24px; display:flex; flex-direction:column; gap:12px}
+  .field{display:flex; flex-direction:column; gap:4px; min-width:0}
+  .field label{font-size:0.76rem; color:var(--muted); font-weight:500}
+  .field input{width:100%; min-width:0; border:1px solid var(--line); border-radius:9px; background:#fff; padding:10px 11px; font-size:0.95rem}
+  .field input:focus{outline:none; border-color:var(--terra); box-shadow:0 0 0 3px rgba(199,91,50,0.14)}
+  .field .hint{font-size:0.74rem; color:var(--muted)}
+  .msg{margin:0; font-size:0.82rem; color:var(--terra); min-height:1.2em}
+  .submit{
+    border:1px solid var(--gold); background:var(--gold); color:#2A2113; font-weight:600; font-size:0.95rem;
+    border-radius:999px; padding:11px 16px; cursor:pointer
+  }
+  .submit:hover{background:#E0C27E}
+  .submit:disabled{opacity:0.65; cursor:progress}
+</style>
+</head>
+<body>
+
+<main class="card">
+  <header class="head">
+    <img src="/images/emblem.jpg" alt="">
+    <h1>Nila Inn Residency</h1>
+    <p>Invoices</p>
+  </header>
+  <div class="rule"></div>
+
+  <div class="tabs" id="tabs" role="tablist" hidden>
+    <button type="button" role="tab" data-mode="login" aria-selected="true">Log in</button>
+    <button type="button" role="tab" data-mode="register" aria-selected="false">Create account</button>
+  </div>
+
+  <form id="form" novalidate>
+    <div class="field" id="w-name" hidden><label for="f-name">Your name</label><input id="f-name" autocomplete="name"></div>
+    <div class="field"><label for="f-email">Email</label><input id="f-email" type="email" autocomplete="email" inputmode="email" autofocus></div>
+    <div class="field">
+      <label for="f-pass">Password</label>
+      <input id="f-pass" type="password" autocomplete="current-password">
+      <span class="hint" id="passHint" hidden>At least 8 characters.</span>
+    </div>
+    <p class="msg" id="msg" role="alert"></p>
+    <button class="submit" id="bSubmit" type="submit">Log in</button>
+  </form>
+</main>
+
+<script src="/login/login.js"></script>
+</body>
+</html>
