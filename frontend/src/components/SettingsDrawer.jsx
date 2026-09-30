@@ -1,5 +1,6 @@
-import React, { useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { iso } from '../utils/calculations.js';
+import { changePassword } from '../services/api.js';
 
 export default function SettingsDrawer({
   isOpen,
@@ -13,6 +14,15 @@ export default function SettingsDrawer({
   onToast,
 }) {
   const fileInputRef = useRef(null);
+
+  // Password state
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [passLoading, setPassLoading] = useState(false);
+  const [passError, setPassError] = useState('');
+  const [passSuccess, setPassSuccess] = useState('');
 
   if (!isOpen) return null;
 
@@ -64,6 +74,47 @@ export default function SettingsDrawer({
     e.target.value = '';
   };
 
+  const handlePasswordSubmit = async (e) => {
+    e.preventDefault();
+    setPassError('');
+    setPassSuccess('');
+
+    if (!currentPassword) {
+      setPassError('Enter your current password.');
+      return;
+    }
+    if (!newPassword) {
+      setPassError('Enter a new password.');
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPassError('New password must be at least 8 characters.');
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPassError('New passwords do not match.');
+      return;
+    }
+
+    setPassLoading(true);
+    try {
+      await changePassword({ currentPassword, newPassword });
+      setPassSuccess('Password updated successfully!');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      onToast('Password changed successfully');
+      setTimeout(() => {
+        setPassSuccess('');
+        setShowPasswordForm(false);
+      }, 1500);
+    } catch (err) {
+      setPassError(err.message || 'Failed to update password.');
+    } finally {
+      setPassLoading(false);
+    }
+  };
+
   return (
     <div
       className="scrim"
@@ -90,10 +141,91 @@ export default function SettingsDrawer({
                   {user?.email || 'Authenticated user'}
                 </div>
               </div>
-              <button type="button" className="plain danger" onClick={onLogout}>
-                Log out
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button
+                  type="button"
+                  className="plain"
+                  onClick={() => {
+                    setShowPasswordForm((prev) => !prev);
+                    setPassError('');
+                    setPassSuccess('');
+                  }}
+                >
+                  {showPasswordForm ? 'Cancel' : 'Change password'}
+                </button>
+                <button type="button" className="plain danger" onClick={onLogout}>
+                  Log out
+                </button>
+              </div>
             </div>
+
+            {/* Change Password Form */}
+            {showPasswordForm && (
+              <form
+                onSubmit={handlePasswordSubmit}
+                style={{
+                  marginTop: '12px',
+                  paddingTop: '12px',
+                  borderTop: '1px solid var(--line-2)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '10px',
+                }}
+              >
+                <div className="field">
+                  <label htmlFor="f-cur-pass">Current password</label>
+                  <input
+                    id="f-cur-pass"
+                    type="password"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    placeholder="Enter current password"
+                    autoComplete="current-password"
+                  />
+                </div>
+
+                <div className="row">
+                  <div className="field">
+                    <label htmlFor="f-new-pass">New password</label>
+                    <input
+                      id="f-new-pass"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Min 8 characters"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div className="field">
+                    <label htmlFor="f-conf-pass">Confirm new password</label>
+                    <input
+                      id="f-conf-pass"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Re-type new password"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+
+                {passError && <p className="msg" style={{ margin: 0 }}>{passError}</p>}
+                {passSuccess && (
+                  <p style={{ margin: 0, color: 'var(--ok)', fontSize: '0.82rem', fontWeight: 500 }}>
+                    {passSuccess}
+                  </p>
+                )}
+
+                <button
+                  type="submit"
+                  className="plain solid"
+                  style={{ alignSelf: 'flex-start' }}
+                  disabled={passLoading}
+                >
+                  {passLoading ? 'Updating…' : 'Update password'}
+                </button>
+              </form>
+            )}
           </section>
 
           {/* Business Details */}

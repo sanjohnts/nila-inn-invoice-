@@ -5,8 +5,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import bcrypt from 'bcryptjs';
 import { connectDB } from './db.js';
 import authRoutes from './routes/auth.js';
+import User from './models/User.js';
 
 const BACKEND_DIR = import.meta.dirname;
 const ROOT = path.join(BACKEND_DIR, '..');
@@ -98,15 +100,37 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong. Please try again.' });
 });
 
+// Auto-seed admin user if no users exist in database
+async function autoSeedAdmin() {
+  try {
+    const count = await User.countDocuments();
+    if (count === 0) {
+      const adminEmail = (process.env.ADMIN_EMAIL || 'admin@nilainn.com').toLowerCase().trim();
+      const adminPassword = process.env.ADMIN_PASSWORD || 'admin@1234';
+      const adminName = process.env.ADMIN_NAME || 'Admin';
+      const passwordHash = await bcrypt.hash(adminPassword, 12);
+      await User.create({ name: adminName, email: adminEmail, passwordHash });
+      console.log(`\n✔ Auto-seeded default admin account:`);
+      console.log(`  Email:    ${adminEmail}`);
+      console.log(`  Password: ${adminPassword}\n`);
+    }
+  } catch (e) {
+    console.warn('Auto-seed check notice:', e.message);
+  }
+}
+
 const port = process.env.PORT || 3000;
 connectDB(process.env.MONGODB_URI, process.env.MONGODB_DB || 'nila_invoice')
-  .then(() => app.listen(port, err => {
-    if (err) {
-      console.error(err.code === 'EADDRINUSE' ? `Port ${port} is already in use. Close the other program using it, or set a different PORT in .env.` : `Could not start the server: ${err.message}`);
-      process.exit(1);
-    }
-    console.log(`Nila Inn backend API running at http://localhost:${port}`);
-  }))
+  .then(async () => {
+    await autoSeedAdmin();
+    app.listen(port, err => {
+      if (err) {
+        console.error(err.code === 'EADDRINUSE' ? `Port ${port} is already in use. Close the other program using it, or set a different PORT in .env.` : `Could not start the server: ${err.message}`);
+        process.exit(1);
+      }
+      console.log(`Nila Inn backend API running at http://localhost:${port}`);
+    });
+  })
   .catch(err => {
     console.error(`Could not connect to MongoDB: ${err.message}`);
     process.exit(1);

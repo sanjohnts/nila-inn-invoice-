@@ -248,6 +248,46 @@ textarea {
   font-size: 0.92rem;
 }
 
+.auth-password-control {
+  position: relative;
+}
+
+.auth-password-control input {
+  padding-right: 42px;
+}
+
+.auth-password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 7px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+
+.auth-password-toggle:hover {
+  background: var(--panel-2);
+  color: var(--ink);
+}
+
+.auth-password-toggle:focus-visible {
+  outline: 2px solid var(--terra);
+  outline-offset: 1px;
+}
+
+.auth-password-toggle svg {
+  width: 18px;
+  height: 18px;
+}
+
 .field textarea {
   resize: vertical;
   min-height: 58px;

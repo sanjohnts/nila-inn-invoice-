@@ -1,31 +1,22 @@
-import React, { useState, useEffect } from 'react';
-import { loginUser, registerUser, fetchAuthConfig } from '../services/api.js';
+import React, { useState } from 'react';
+import { loginUser } from '../services/api.js';
 
 export default function AuthModal({ onLoginSuccess }) {
-  const [mode, setMode] = useState('login'); // 'login' | 'register'
-  const [allowSignup, setAllowSignup] = useState(true);
-  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    fetchAuthConfig().then((cfg) => {
-      setAllowSignup(cfg.signup !== false);
-    });
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
     const cleanEmail = email.trim();
-    const cleanName = name.trim();
-
     const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (mode === 'register' && !cleanName) {
-      setError('Enter your name.');
+
+    if (!cleanEmail) {
+      setError('Enter your email address.');
       return;
     }
     if (!EMAIL_REGEX.test(cleanEmail)) {
@@ -36,22 +27,13 @@ export default function AuthModal({ onLoginSuccess }) {
       setError('Enter your password.');
       return;
     }
-    if (mode === 'register' && password.length < 8) {
-      setError('Password must be at least 8 characters.');
-      return;
-    }
 
     setLoading(true);
     try {
-      let user;
-      if (mode === 'register') {
-        user = await registerUser({ name: cleanName, email: cleanEmail, password });
-      } else {
-        user = await loginUser({ email: cleanEmail, password });
-      }
+      const user = await loginUser({ email: cleanEmail, password });
       onLoginSuccess(user);
     } catch (err) {
-      setError(err.message || 'Something went wrong. Please try again.');
+      setError(err.message || 'Invalid email or password.');
     } finally {
       setLoading(false);
     }
@@ -63,50 +45,11 @@ export default function AuthModal({ onLoginSuccess }) {
         <header className="auth-head">
           <img src="/images/emblem.jpg" alt="Emblem" />
           <h1>Nila Inn Residency</h1>
-          <p>Invoices</p>
+          <p>Invoice System — Log in</p>
         </header>
         <div className="rule" />
 
-        {allowSignup && (
-          <div className="auth-tabs" role="tablist">
-            <button
-              type="button"
-              className={mode === 'login' ? 'active' : ''}
-              onClick={() => {
-                setMode('login');
-                setError('');
-              }}
-            >
-              Log in
-            </button>
-            <button
-              type="button"
-              className={mode === 'register' ? 'active' : ''}
-              onClick={() => {
-                setMode('register');
-                setError('');
-              }}
-            >
-              Create account
-            </button>
-          </div>
-        )}
-
         <form className="auth-form" onSubmit={handleSubmit}>
-          {mode === 'register' && (
-            <div className="field">
-              <label htmlFor="f-auth-name">Your name</label>
-              <input
-                id="f-auth-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                autoComplete="name"
-                placeholder="Full Name"
-                autoFocus
-              />
-            </div>
-          )}
-
           <div className="field">
             <label htmlFor="f-auth-email">Email</label>
             <input
@@ -116,35 +59,50 @@ export default function AuthModal({ onLoginSuccess }) {
               onChange={(e) => setEmail(e.target.value)}
               autoComplete="email"
               inputMode="email"
-              placeholder="user@example.com"
-              autoFocus={mode === 'login'}
+              autoFocus
             />
           </div>
 
           <div className="field">
             <label htmlFor="f-auth-pass">Password</label>
-            <input
-              id="f-auth-pass"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-            />
-            {mode === 'register' && (
-              <span className="hint">At least 8 characters.</span>
-            )}
+            <div className="auth-password-control">
+              <input
+                id="f-auth-pass"
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+              <button
+                className="auth-password-toggle"
+                type="button"
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                aria-pressed={showPassword}
+                onClick={() => setShowPassword((visible) => !visible)}
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                  {showPassword ? (
+                    <>
+                      <path d="M3 3l18 18" />
+                      <path d="M10.6 10.6a2 2 0 002.8 2.8" />
+                      <path d="M9.9 5.2A10.8 10.8 0 0112 5c5 0 8.5 4.4 9.5 6.2a1.6 1.6 0 010 1.6 12.7 12.7 0 01-3.1 3.5" />
+                      <path d="M6.2 6.2a13.4 13.4 0 00-3.7 5 1.6 1.6 0 000 1.6C3.5 14.6 7 19 12 19a10 10 0 004-.8" />
+                    </>
+                  ) : (
+                    <>
+                      <path d="M2.5 12s3.4-7 9.5-7 9.5 7 9.5 7-3.4 7-9.5 7-9.5-7-9.5-7z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </>
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
 
           {error && <p className="msg">{error}</p>}
 
           <button className="auth-submit" type="submit" disabled={loading}>
-            {loading
-              ? mode === 'register'
-                ? 'Creating account…'
-                : 'Logging in…'
-              : mode === 'register'
-              ? 'Create account'
-              : 'Log in'}
+            {loading ? 'Logging in…' : 'Log in'}
           </button>
         </form>
       </div>

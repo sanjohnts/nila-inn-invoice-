@@ -1,29 +1,5 @@
 /* Authentication and Server API calls */
 
-export async function fetchAuthConfig() {
-  try {
-    const res = await fetch('/api/auth/config', { credentials: 'include' });
-    if (!res.ok) return { signup: true };
-    return await res.json();
-  } catch {
-    return { signup: true };
-  }
-}
-
-export async function registerUser({ name, email, password }) {
-  const res = await fetch('/api/auth/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
-    body: JSON.stringify({ name, email, password }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(data.error || 'Failed to create account.');
-  }
-  return data.user;
-}
-
 export async function loginUser({ email, password }) {
   const res = await fetch('/api/auth/login', {
     method: 'POST',
@@ -62,4 +38,18 @@ export async function getMe() {
   }
   const data = await res.json();
   return data.user || null;
+}
+
+export async function changePassword({ currentPassword, newPassword }) {
+  const res = await fetch('/api/auth/change-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(data.error || 'Failed to update password.');
+  }
+  return data;
 }
