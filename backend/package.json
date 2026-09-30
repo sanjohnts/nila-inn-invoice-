@@ -1,13 +1,13 @@
 {
-  "name": "nila-invoice",
+  "name": "nila-invoice-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Nila Inn Residency invoice maker with login",
+  "description": "Backend API for Nila Inn Residency invoice system",
   "type": "module",
-  "main": "server/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server/index.js",
-    "dev": "node --watch server/index.js"
+    "start": "node index.js",
+    "dev": "node --watch index.js"
   },
   "engines": {
     "node": ">=20.12"
