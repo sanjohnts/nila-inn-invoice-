@@ -60,7 +60,7 @@ const allowedOrigins = isProduction
       'https://api.nilainnresidency.com',
       'https://www.nilainnresidency.com',
     ].filter(Boolean)
-  : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://127.0.0.1:3000'];
+  : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3003', 'http://127.0.0.1:3003'];
 
 app.use(cors({
   origin: allowedOrigins,
