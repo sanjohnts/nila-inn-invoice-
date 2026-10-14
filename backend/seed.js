@@ -60,7 +60,7 @@ async function seed() {
 
     console.log(`----------------------------------------`);
     console.log(` Email:    ${adminEmail}`);
-    console.log(` Password: ${adminPassword}`);
+    console.log(` Password: ********** (set via ADMIN_PASSWORD env var)`);
     console.log(`----------------------------------------\n`);
 
     await mongoose.disconnect();

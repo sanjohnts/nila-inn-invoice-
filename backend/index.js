@@ -4,6 +4,9 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
+import compression from 'compression';
 import cookieParser from 'cookie-parser';
 import bcrypt from 'bcryptjs';
 import { connectDB } from './db.js';
@@ -38,35 +41,38 @@ for (const key of ['MONGODB_URI', 'JWT_SECRET']) {
 }
 
 const app = express();
+const isProduction = process.env.NODE_ENV === 'production';
+
+/* ---------- security & performance middleware ---------- */
 app.disable('x-powered-by');
+app.use(helmet({
+  contentSecurityPolicy: isProduction ? undefined : false,  // disable CSP in dev for Vite HMR
+}));
+app.use(compression());
 app.use(express.json({ limit: '100kb' }));
 app.use(cookieParser());
 
-// CORS configuration for React dev server and client
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigins = [
-    'http://localhost:5173',
-    'http://127.0.0.1:5173',
-    'http://localhost:3000',
-    'http://127.0.0.1:3000',
-    process.env.CLIENT_URL
-  ].filter(Boolean);
+// CORS configuration
+const allowedOrigins = isProduction
+  ? [
+      process.env.CLIENT_URL,
+      'https://invoice.nilainnresidency.com',
+      'https://api.nilainnresidency.com',
+      'https://www.nilainnresidency.com',
+    ].filter(Boolean)
+  : ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:3000', 'http://127.0.0.1:3000'];
 
-  if (origin && (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production')) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Access-Control-Allow-Credentials', 'true');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  }
-
-  if (req.method === 'OPTIONS') {
-    return res.sendStatus(204);
-  }
-  next();
-});
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 /* ---------- api ---------- */
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime: Math.round(process.uptime()), timestamp: new Date().toISOString() });
+});
 app.use('/api/auth', authRoutes);
 
 // Static assets (like hotel emblem) from frontend
@@ -96,7 +102,8 @@ app.use('/api', (req, res) => res.status(404).json({ error: 'Endpoint not found.
 app.use((err, req, res, next) => {
   if (err.code === 11000) return res.status(409).json({ error: 'An account with this email already exists.' });
   if (err.type === 'entity.parse.failed') return res.status(400).json({ error: 'Invalid request.' });
-  console.error(err);
+  if (!isProduction) console.error(err);
+  else console.error(`[ERROR] ${req.method} ${req.path} — ${err.message}`);
   res.status(500).json({ error: 'Something went wrong. Please try again.' });
 });
 
@@ -112,7 +119,7 @@ async function autoSeedAdmin() {
       await User.create({ name: adminName, email: adminEmail, passwordHash });
       console.log(`\n✔ Auto-seeded default admin account:`);
       console.log(`  Email:    ${adminEmail}`);
-      console.log(`  Password: ${adminPassword}\n`);
+      console.log(`  Password: ********** (set via ADMIN_PASSWORD env var)\n`);
     }
   } catch (e) {
     console.warn('Auto-seed check notice:', e.message);
@@ -123,13 +130,25 @@ const port = process.env.PORT || 3000;
 connectDB(process.env.MONGODB_URI, process.env.MONGODB_DB || 'nila_invoice')
   .then(async () => {
     await autoSeedAdmin();
-    app.listen(port, err => {
+    const server = app.listen(port, err => {
       if (err) {
         console.error(err.code === 'EADDRINUSE' ? `Port ${port} is already in use. Close the other program using it, or set a different PORT in .env.` : `Could not start the server: ${err.message}`);
         process.exit(1);
       }
-      console.log(`Nila Inn backend API running at http://localhost:${port}`);
+      console.log(`Nila Inn backend API running at http://localhost:${port} [${isProduction ? 'production' : 'development'}]`);
     });
+
+    // Graceful shutdown
+    const shutdown = (signal) => {
+      console.log(`\n${signal} received. Shutting down gracefully...`);
+      server.close(() => {
+        console.log('HTTP server closed.');
+        process.exit(0);
+      });
+      setTimeout(() => { console.error('Forced shutdown.'); process.exit(1); }, 10000);
+    };
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+    process.on('SIGINT', () => shutdown('SIGINT'));
   })
   .catch(err => {
     console.error(`Could not connect to MongoDB: ${err.message}`);
