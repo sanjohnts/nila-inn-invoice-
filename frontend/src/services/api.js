@@ -1,7 +1,12 @@
 /* Authentication and Server API calls */
 
+// In production this is set to 'https://api.nilainnresidency.com' via the
+// VITE_API_URL variable embedded at build time.  In development it is left
+// empty so that relative paths fall through to the Vite dev-server proxy.
+const API_BASE = import.meta.env.VITE_API_URL || '';
+
 export async function loginUser({ email, password }) {
-  const res = await fetch('/api/auth/login', {
+  const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -16,7 +21,7 @@ export async function loginUser({ email, password }) {
 
 export async function logoutUser() {
   try {
-    await fetch('/api/auth/logout', {
+    await fetch(`${API_BASE}/api/auth/logout`, {
       method: 'POST',
       credentials: 'include',
     });
@@ -26,7 +31,7 @@ export async function logoutUser() {
 }
 
 export async function getMe() {
-  const res = await fetch('/api/auth/me', {
+  const res = await fetch(`${API_BASE}/api/auth/me`, {
     cache: 'no-store',
     credentials: 'include',
   });
@@ -41,7 +46,7 @@ export async function getMe() {
 }
 
 export async function changePassword({ currentPassword, newPassword }) {
-  const res = await fetch('/api/auth/change-password', {
+  const res = await fetch(`${API_BASE}/api/auth/change-password`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
